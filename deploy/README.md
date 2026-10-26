@@ -78,7 +78,8 @@ the boot with `docker compose logs -f app` until you see
 
 ## 4. First-run settings (once, in the browser)
 
-1. Log in with **admin / admin** and change the password immediately (Admin → Users).
+1. Log in with **Admin / 4upocx0v** (the seeded first-run account — created only on an empty
+   database; change the password in Admin → Users whenever you like).
 2. On the **Settings** page:
    - **Upload Directory:** `/data/streama`
    - **TheMovieDB API key:** get one free at

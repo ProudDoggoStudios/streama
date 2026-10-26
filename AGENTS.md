@@ -31,7 +31,8 @@ sandbox, point the web server/proxy at 8080 directly.
 
 ## Behaviour worth knowing
 
-- Built-in seed data (`BootStrap` + `DefaultDataService`): roles and an **admin/admin** user.
+- Built-in seed data (`BootStrap` + `DefaultDataService`): roles and an **Admin / 4upocx0v** user
+  (only created when the database is empty — an existing database keeps its own credentials).
   The login screen shows that hint while the "First Time Login Info" setting is true.
 - After login the app forces the first-run **Settings** page and the dashboard redirects there
   until `Upload Directory` has a value. `Save Settings` stays disabled while any required

@@ -23,8 +23,8 @@ class DefaultDataService {
   def createDefaultUsers(){
     def users = [
         [
-            username: 'admin',
-            password: 'admin',
+            username: 'Admin',
+            password: '4upocx0v',
             fullName: 'Administrator',
             enabled: true,
             roles: [Role.findByAuthority("ROLE_ADMIN"), Role.findByAuthority("ROLE_CONTENT_MANAGER"),Role.findByAuthority("ROLE_TRUSTED_USER")]
@@ -92,7 +92,7 @@ class DefaultDataService {
         ],
         [
             settingsKey: 'First Time Login Info',
-            description: 'Should the First-Time login info (admin/admin) be shown in the login screen?',
+            description: 'Should the First-Time login info (Admin username) be shown in the login screen?',
             settingsType: 'boolean',
             value: 'true'
         ],
