@@ -1,0 +1,39 @@
+# Base44 sandbox stack for Streama.
+#
+# Runs the app straight from the cloned source (`gradlew bootRun`, Grails 3 dev
+# mode with reloading) instead of the prebuilt release jar used by docker/Dockerfile.
+# The `docker` Grails environment is the project's own H2-file-database profile, so
+# no external database service is required; the database and the default upload
+# directory both live in the `streama_data` volume (mounted at /data).
+services:
+  streama:
+    build:
+      context: .
+      dockerfile: Dockerfile.base44
+    restart: on-failure
+    working_dir: /app
+    command: ["sh", "-ec", "exec ./gradlew --no-daemon -Dgrails.env=docker -Dlocal.config.location=app-config.yml -Dlocal.config.regex=CustomRegex.yml bootRun"]
+    ports:
+      - "3000:8080"
+    volumes:
+      - .:/app
+      - gradle_cache:/root/.gradle
+      - streama_data:/data
+    environment:
+      - GRADLE_OPTS=-Xmx2g -Dorg.gradle.daemon=false
+      - BASE44_PREVIEW_MODE
+    labels:
+      base44.project: streama
+      base44.kind: web
+      base44.port: "3000"
+    healthcheck:
+      # First boot compiles the whole Grails app, hence the long start period.
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8080/login/auth"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 1200s
+
+volumes:
+  gradle_cache:
+  streama_data:
