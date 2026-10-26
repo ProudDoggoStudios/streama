@@ -7,8 +7,17 @@ cannot run this Gradle/Spring Boot 1.4 combination. `Dockerfile.base44` pins
 
 ## Stack
 
-`docker compose -f docker-compose.base44.yml up -d --build` — one service, published on
-host port **3000** → container 8080.
+`docker compose -f docker-compose.base44.yml up -d --build` — two services: `streama` (the app,
+internal port 8080) and `preview` (nginx, owns host port **3000** → 80).
+
+**The preview must go through the `preview` proxy** (`.base44/nginx-preview.conf`), not straight
+to port 8080. Streama builds *absolute* redirects from the request scheme, and the sandbox proxy
+does not forward `X-Forwarded-Proto`, so the app answered `Location: http://<host>/login/auth`,
+which browsers block inside the https preview frame (blank preview). The shim forwards
+`X-Forwarded-Proto: https`, and serves the login page as a 200 at `/` for anonymous visitors so the
+frame gets a real entry document (the app's own `/` is a 302 with an empty body). Signed-in
+visitors pass straight through to the app shell. It changes no application behaviour — outside the
+sandbox, point the web server/proxy at 8080 directly.
 
 - Grails environment `docker` (the project's own profile from `grails-app/conf/application.yml`),
   which uses an **H2 file database** at `/data/streamadb` — no MySQL service needed.
