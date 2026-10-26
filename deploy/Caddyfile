@@ -1,0 +1,8 @@
+# With STREAMA_DOMAIN set to a hostname whose DNS points here, Caddy fetches and
+# renews a Let's Encrypt certificate automatically. Left at its ":80" fallback
+# (no domain yet), it serves plain HTTP on the server's IP address instead.
+{$STREAMA_DOMAIN}
+
+encode gzip
+
+reverse_proxy app:8080

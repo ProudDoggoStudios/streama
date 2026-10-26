@@ -44,6 +44,10 @@ sandbox, point the web server/proxy at 8080 directly.
   Groovy classes/domain objects need `docker compose -f docker-compose.base44.yml restart streama`
   (the Grails 3.2 spring-loaded agent is not attached when running the `docker` environment),
   followed by a preview reload.
+- `deploy/` is the **public deployment** stack (Oracle Cloud Always Free VM: Caddy for HTTPS +
+  the release jar in the `docker` environment, one `streama_data` volume for DB and videos).
+  It is independent of this sandbox compose and must not be used for previewing — see
+  `deploy/README.md`.
 - `docker/Dockerfile` + `docker/docker-compose.yml` are the upstream release-image setup
   (downloads the published jar) — deliberately not used here, since they cannot reflect source edits.
 
