@@ -21,6 +21,7 @@ class VideoController {
   def videoService
   def userActivityService
   def transcodingService
+  def muxService
 
 
   def index() {
@@ -122,15 +123,30 @@ class VideoController {
       return
     }
 
-    def file = uploadService.upload(request)
+    def uploadedFile = request.getFile('file')
+    def isVideoUpload = uploadedFile && fileService.allowedVideoFormats.contains(fileExtensionOf(uploadedFile.originalFilename))
+
+    // Videos go to Mux; everything else (subtitles, images) keeps using the local upload directory.
+    def file
+    if (isVideoUpload && muxService.isConfigured()) {
+      def muxResult = muxService.uploadVideo(uploadedFile, params)
+      if (muxResult.error) {
+        response.setStatus(BAD_GATEWAY.value())
+        render([message: muxResult.error] as JSON)
+        return
+      }
+      file = muxResult.file
+    } else {
+      file = uploadService.upload(request)
+    }
 
     if (file != null) {
       file.isDefault = videoService.haveSetByDefault(videoInstance, file)
       videoInstance.addToFiles(file)
       videoInstance.save flush: true, failOnError: true
 
-      // Probe audio codec if this is a video file
-      if (fileService.allowedVideoFormats.contains(file.extension)) {
+      // Probe audio codec if this is a video file stored on this server
+      if (fileService.allowedVideoFormats.contains(file.extension) && !file.muxUploadId) {
         videoService.probeFileAudioCodec(file)
       }
 
@@ -140,6 +156,13 @@ class VideoController {
     }
 
 
+  }
+
+  private String fileExtensionOf(String filename) {
+    if (!filename || filename.lastIndexOf('.') < 0) {
+      return ''
+    }
+    return filename.substring(filename.lastIndexOf('.')).toLowerCase()
   }
 
   @Transactional
@@ -211,8 +234,8 @@ class VideoController {
 
   }
 
-  // last occurrence of mp4|webm|ogg|srt|vtt
-  def videoExtensionRegex = ~/(?:.(?![^a-zA-Z0-9]))(mp4|webm|ogg|srt|vtt)/
+  // last occurrence of mp4|webm|ogg|srt|vtt|m3u8 (m3u8 = HLS stream, e.g. a Mux playback URL)
+  def videoExtensionRegex = ~/(?:.(?![^a-zA-Z0-9]))(mp4|webm|ogg|srt|vtt|m3u8)/
 
   @Transactional
   def addExternalUrl(Video videoInstance) {

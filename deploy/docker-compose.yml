@@ -8,6 +8,10 @@ services:
   app:
     build: ./image
     restart: unless-stopped
+    environment:
+      # Videos live on Mux; these are optional (they can also be entered on the Settings page).
+      - MUX_TOKEN_ID=${MUX_TOKEN_ID:-}
+      - MUX_TOKEN_SECRET=${MUX_TOKEN_SECRET:-}
     volumes:
       - streama_data:/data
 

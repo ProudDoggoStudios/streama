@@ -1,10 +1,14 @@
 # Making Streama public (free hosting, no computer of your own needed)
 
-Streama needs three things a typical free "web app" host does not give you: a
-**long-running Java process**, a **persistent disk** for the database, and **lots of
-disk + bandwidth** for video. Free tiers of Render, Railway, Fly.io, Vercel and Netlify
-fail at least one of those (Render's free services have no persistent disk and sleep;
-Vercel/Netlify cannot run a JVM server at all).
+Streama needs two things a typical free "web app" host does not give you: a
+**long-running Java process** and a **persistent disk** for the database. Free tiers of
+Render, Railway, Fly.io, Vercel and Netlify fail at least one of those (Render's free
+services have no persistent disk and sleep; Vercel/Netlify cannot run a JVM server at
+all).
+
+Video storage and streaming are handled by **Mux**, so this server never stores or serves
+video files: small server, no giant disk, and your viewers stream from Mux's CDN instead
+of from the VM.
 
 The one genuinely free option that fits is **Oracle Cloud's Always Free** tier — a real
 virtual machine you keep for as long as the account exists, with 4 ARM cores / 24 GB
@@ -81,25 +85,31 @@ the boot with `docker compose logs -f app` until you see
 1. Log in with **Admin / 4upocx0v** (the seeded first-run account — created only on an empty
    database; change the password in Admin → Users whenever you like).
 2. On the **Settings** page:
-   - **Upload Directory:** `/data/streama`
+   - **Mux Token ID / Mux Token Secret:** your Mux access token, from
+     <https://dashboard.mux.com/settings/access-tokens>. Skip both if you already put
+     `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` in `.env`. Videos cannot be added until Mux is
+     configured.
    - **TheMovieDB API key:** get one free at
      <https://www.themoviedb.org/settings/api> (needed before `Save Settings` unlocks)
    - **Base URL:** your public address, e.g. `https://streama.example.com` — this is what
      makes video links and redirects work for remote viewers.
-3. **Save Settings**, then **Validate** each value.
+3. **Save Settings**, then **Validate** each value (the Mux validation calls the Mux API).
 
 ## 5. Day-to-day
 
 | Task | Command (run in `deploy/`) |
 | --- | --- |
 | Update the app | `git pull && docker compose up -d --build` |
-| Copy existing videos onto the server | `docker compose cp ./movie.mkv app:/data/streama/` |
+| Upload a video | Upload it on a movie/show page in the app — it goes to Mux, not to this server |
 | Backup database + uploads | `docker run --rm -v deploy_streama_data:/data -v "$PWD":/backup alpine tar czf /backup/streama-backup.tgz /data` |
 | Restore | `docker run --rm -v deploy_streama_data:/data -v "$PWD":/backup alpine sh -c 'cd / && tar xzf /backup/streama-backup.tgz'` |
 | Logs | `docker compose logs -f` |
 
-Everything persistent (database at `/data/streamadb`, videos at `/data/streama`) lives in
-the `streama_data` volume, so rebuilding or updating the container never loses data.
+Everything persistent (the database at `/data/streamadb` and the images/subtitles at
+`/data/streama`) lives in the `streama_data` volume, so rebuilding or updating the
+container never loses data. Uploaded videos are not on this server at all — they are on
+Mux, so deleting the Mux access token (or the account) would lose them; keep the token
+safe.
 
 ## Notes
 

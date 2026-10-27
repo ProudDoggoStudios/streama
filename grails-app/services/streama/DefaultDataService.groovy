@@ -48,10 +48,24 @@ class DefaultDataService {
     def settings = [
         [
             settingsKey: 'Upload Directory',
-            description: 'This setting provides the application with your desired upload-path for all files. ' +
-                'The default so far has been /data/streama. Remember: if you change this path, copy all the files (that were previously added) into the new directory.',
+            description: 'Local directory used for the files that are not stored on Mux: images and subtitle files. ' +
+                'The default is /data/streama. Video files are uploaded to Mux and are not stored here.',
             settingsType: 'string',
-            required: true
+            required: false
+        ],
+        [
+            settingsKey: 'Mux Token ID',
+            description: 'Token ID of your Mux API access token (https://dashboard.mux.com/settings/access-tokens). ' +
+                'Videos are uploaded to Mux and streamed from Mux. Leave this empty to use the MUX_TOKEN_ID environment variable instead.',
+            settingsType: 'string',
+            required: false
+        ],
+        [
+            settingsKey: 'Mux Token Secret',
+            description: 'Secret Key of your Mux API access token. It is only used to talk to the Mux API from this server. ' +
+                'Leave this empty to use the MUX_TOKEN_SECRET environment variable instead.',
+            settingsType: 'string',
+            required: false
         ],
         [
             settingsKey: 'TheMovieDB API key',

@@ -21,6 +21,11 @@ services:
       - .:/app
       - gradle_cache:/root/.gradle
       - streama_data:/data
+    # Platform-delivered secrets (MUX_TOKEN_ID / MUX_TOKEN_SECRET). Listed last so a
+    # dashboard value always outranks anything set in this file; the file lives outside
+    # the repo and is created by Base44.
+    env_file:
+      - /run/base44/app.env
     environment:
       - GRADLE_OPTS=-Xmx2g -Dorg.gradle.daemon=false
       - BASE44_PREVIEW_MODE

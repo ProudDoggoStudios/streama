@@ -50,6 +50,7 @@ grails.plugin.springsecurity.controllerAnnotations.staticRules = [
   [pattern:'/tag.json',  access :['IS_AUTHENTICATED_REMEMBERED']],
   [pattern:'/tag/index',  access :['IS_AUTHENTICATED_REMEMBERED']],
   [pattern:'/settings/index',  access :['IS_AUTHENTICATED_REMEMBERED']],
+  [pattern:'/mux/configured',  access :['IS_AUTHENTICATED_REMEMBERED']],
   [pattern:'/report/save',  access :['IS_AUTHENTICATED_REMEMBERED']],
   [pattern:'/video/markCompleted',  access :['IS_AUTHENTICATED_REMEMBERED']],
   [pattern:'/video/markAsUnviewed',  access :['IS_AUTHENTICATED_REMEMBERED']],
@@ -70,6 +71,7 @@ grails.plugin.springsecurity.controllerAnnotations.staticRules = [
   [pattern:'/tag/**',  access :['ROLE_CONTENT_MANAGER']],
   [pattern:'/report/**',  access :['ROLE_CONTENT_MANAGER']],
   [pattern:'/file/**',  access :['ROLE_CONTENT_MANAGER']],
+  [pattern:'/mux/fileStatus',  access :['ROLE_CONTENT_MANAGER']],
   [pattern:'/file/upload',  access :['ROLE_CONTENT_MANAGER', 'ROLE_ADMIN']],
   [pattern:'/file/getURL',  access :['ROLE_CONTENT_MANAGER', 'ROLE_ADMIN']],
 

@@ -34,13 +34,40 @@ sandbox, point the web server/proxy at 8080 directly.
 - Built-in seed data (`BootStrap` + `DefaultDataService`): roles and an **Admin / 4upocx0v** user
   (only created when the database is empty — an existing database keeps its own credentials).
   The login screen shows that hint while the "First Time Login Info" setting is true.
-- After login the app forces the first-run **Settings** page and the dashboard redirects there
-  until `Upload Directory` has a value. `Save Settings` stays disabled while any required
-  setting is empty — the **TheMovieDB API key** is required, so a TMDb key is needed to get
-  past setup. That key is stored in the database via the Settings UI; it is **not** an
-  environment variable, so it is not part of the compose/secrets wiring.
-- `/data/streama` exists and is writable (container runs as root), so it validates as an
-  upload directory.
+- **Videos are stored on Mux, not on the server.** Uploading a video on a movie/show page creates a
+  Mux direct upload, streams the file to Mux, and stores only the Mux ids on the `File` row
+  (`muxUploadId`, `muxAssetId`, `muxPlaybackId`, `muxStatus`). `File.src` then returns the Mux HLS
+  URL (`https://stream.mux.com/<playbackId>.m3u8`) instead of `/file/serve/...`.
+  - Mux ingests asynchronously: the row is `muxStatus: 'processing'` until `MuxController.fileStatus`
+    resolves the playback id. `upload-service.js` polls that endpoint every 5s and only adds the
+    file to the UI when it is `ready`.
+  - Deleting a video also deletes the Mux asset (`FileService.fullyRemoveFile`).
+  - Only videos go to Mux; images and subtitles still use the local upload directory
+    (`/data/streama`, the `Upload Directory` setting). That setting is kept in the database and in
+    `UploadService`, but is hidden in the Settings UI, and the first-run gate now checks whether Mux
+    is configured instead.
+- **Credentials:** `Mux Token ID` / `Mux Token Secret` can be entered on the Settings page
+  (stored in the database, like the TMDb key) and otherwise fall back to the
+  `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` environment variables, which compose feeds from the
+  platform-managed `/run/base44/app.env`. Videos cannot be uploaded until one of the two is set.
+  Validating a Mux setting calls the Mux API (`MuxService.checkCredentials`).
+- Playback of Mux streams needs HLS: `hls.js` is vendored at
+  `grails-app/assets/bower/hls.js/hls.min.js` and required from `vendor.js`;
+  `streama-video-player-directive.js` attaches it for any `.m3u8` source. hls.js is used
+  whenever `Hls.isSupported()`, and native playback is only the fallback: `canPlayType
+  ('application/vnd.apple.mpegurl')` answers `"maybe"` in the sandbox's browser even though it
+  cannot play the stream, so it must not be used to skip hls.js.
+- **Any new controller action needs a security rule.** `grails-app/conf/application.groovy` sets
+  `rejectIfNoRule = true` plus an explicit `controllerAnnotations.staticRules` list, so a URL with
+  no matching pattern is rejected even for a logged-in admin — Spring Security redirects it to
+  `/login/full` (which reads like an auth problem but is really a missing rule). The Mux endpoints
+  are listed there: `/mux/configured` (authenticated-remembered, used by the dashboard gate) and
+  `/mux/fileStatus` (content manager, used while polling a Mux upload).
+- The dev server serves the JavaScript as individual source files (`?compile=false`), not as a
+  bundled `application.js` — so a page reload picks up JS edits, but `/assets/application.js` does
+  not exist. Groovy edits still need a `streama` restart.
+- The **TheMovieDB API key** is still a *required* setting: `Save Settings` stays disabled while it
+  is empty. It is stored in the database via the Settings UI, not in the environment.
 - Edits to GSPs, Sass/JS assets and templates are picked up without a restart. Changes to
   Groovy classes/domain objects need `docker compose -f docker-compose.base44.yml restart streama`
   (the Grails 3.2 spring-loaded agent is not attached when running the `docker` environment),

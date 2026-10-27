@@ -86,6 +86,8 @@ class MarshallerService {
       returnArray['quality'] = file.quality
       returnArray['subtitleLabel'] = file.subtitleLabel
       returnArray['subtitleSrcLang'] = file.subtitleSrcLang
+      returnArray['muxPlaybackId'] = file.muxPlaybackId
+      returnArray['muxStatus'] = file.muxStatus
 
       return returnArray
     }
@@ -553,6 +555,8 @@ class MarshallerService {
         returnArray['isDefault'] = file.isDefault
         returnArray['subtitleSrcLang'] = file.subtitleSrcLang
         returnArray['subtitleLabel'] = file.subtitleLabel
+        returnArray['muxPlaybackId'] = file.muxPlaybackId
+        returnArray['muxStatus'] = file.muxStatus
 
         return returnArray
       }

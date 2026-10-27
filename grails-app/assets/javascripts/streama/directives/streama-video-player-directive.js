@@ -26,6 +26,7 @@ angular.module('streama').directive('streamaVideoPlayer', [
         var minimizeOnOutro = true;   //Userflag skip to next episode on outro
         var videoSrc = $scope.options.videoSrc.toString();
         var transcodingPollInterval = null;
+        var hlsPlayer = null;   //set for videos that are streamed from Mux (HLS)
 
         $scope.showControls = showControls;
         $scope.toggleSelectEpisodes = toggleSelectEpisodes;
@@ -133,6 +134,7 @@ angular.module('streama').directive('streamaVideoPlayer', [
             video.onerror = onerror;
             video.ontimeupdate = ontimeupdate;
             video.addEventListener('ended', onVideoEnded);
+            initHlsPlayback();
             $scope.scrubberOptions = generateScrupperOoptions();
             $scope.volumeScrubberOptions = generateVolumeScrubberOptions();
             $scope.volumeLevel = localStorageService.get('volumeLevel') || 5;
@@ -338,6 +340,7 @@ angular.module('streama').directive('streamaVideoPlayer', [
           }
 
           console.log("destroy");
+          destroyHlsPlayback();
           if (video) {
             video.pause();
             video.src = '';
@@ -382,7 +385,59 @@ angular.module('streama').directive('streamaVideoPlayer', [
           }
         }
 
+        /**
+         * Mux streams video via HLS (.m3u8), which browsers only play natively in Safari.
+         * Everywhere else hls.js (see vendor.js) feeds the stream to the video element.
+         */
+        function initHlsPlayback() {
+          if (!video) {
+            return;
+          }
+
+          destroyHlsPlayback();
+
+          var src = $scope.options.videoSrc && $scope.options.videoSrc.toString();
+          if (!src || src.indexOf('.m3u8') === -1) {
+            return;
+          }
+          if (typeof Hls === 'undefined' || !Hls.isSupported()) {
+            //Some browsers (Safari, iOS) play HLS on their own; canPlayType alone is not
+            //reliable, so hls.js is only skipped when it really cannot run here.
+            if (!video.canPlayType('application/vnd.apple.mpegurl')) {
+              console.warn('This browser cannot play HLS video.');
+            }
+            return;
+          }
+
+          hlsPlayer = new Hls();
+          hlsPlayer.on(Hls.Events.ERROR, function (event, data) {
+            if (!data.fatal) {
+              return;
+            }
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              hlsPlayer.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hlsPlayer.recoverMediaError();
+            } else {
+              destroyHlsPlayback();
+              $scope.options.onError();
+            }
+          });
+          hlsPlayer.loadSource(src);
+          hlsPlayer.attachMedia(video);
+        }
+
+        function destroyHlsPlayback() {
+          if (hlsPlayer) {
+            hlsPlayer.destroy();
+            hlsPlayer = null;
+          }
+        }
+
         function onerror() {
+          if (hlsPlayer) {
+            return; //hls.js reports stream problems itself
+          }
           if (!video.duration && !$scope.initialPlay) {
             $scope.options.onError();
           }
@@ -501,6 +556,7 @@ angular.module('streama').directive('streamaVideoPlayer', [
           $scope.options.videoSrc = $sce.trustAsResourceUrl(videoFile.src || videoFile.externalLink);
           $scope.options.originalFilename = videoFile.originalFilename;
           $scope.options.videoType = videoFile.contentType;
+          initHlsPlayback();
           localStorageService.set('selectedVideoFile', videoFile.label);
         }
 
