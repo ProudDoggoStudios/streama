@@ -30,6 +30,12 @@ class File implements SimpleInstance {
   Boolean needsTranscoding       // true if browser-incompatible codec
   String transcodedAudioPath     // path to cached transcoded .aac file
 
+  // Mux video storage (videos are uploaded to and played back from Mux)
+  String muxUploadId
+  String muxAssetId
+  String muxPlaybackId
+  String muxStatus               // processing, ready, errored
+
   static constraints = {
     sha256Hex maxSize: 64
     quality inList: ['720p', '480p', '360p']
@@ -40,13 +46,17 @@ class File implements SimpleInstance {
   static transients = ['uploadService']
 
   static simpleInstanceFields = ['id', 'src', 'originalFilename', 'contentType', 'subtitleSrcLang', 'subtitleLabel',
-                                 'externalLink', 'label', 'isDefault', 'audioCodec', 'needsTranscoding']
+                                 'externalLink', 'label', 'isDefault', 'audioCodec', 'needsTranscoding',
+                                 'muxPlaybackId', 'muxStatus']
 
   def getImagePath(){
     uploadService.getPath(this)
   }
 
   def getSrc(){
+    if(muxPlaybackId){
+      return MuxService.hlsUrl(muxPlaybackId)
+    }
     if(externalLink){
       return externalLink
     }
@@ -55,6 +65,10 @@ class File implements SimpleInstance {
   }
 
   def getFileExists(){
+    if(this.muxUploadId || this.muxAssetId){
+      // stored on Mux, so it is not a file on this server's disk
+      return this.muxStatus == 'ready'
+    }
     if(this.imagePath){
       java.io.File rawFile = new java.io.File(this.imagePath)
       return rawFile.exists()

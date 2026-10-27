@@ -10,7 +10,9 @@ angular.module('streama')
 
       apiService.settings.list().then(function (response) {
         var data = response.data;
-        $scope.settings = data;
+        // The local upload directory is no longer a user-facing setting: videos are stored on Mux.
+        // The remaining value is still used for images and subtitles.
+        $scope.settings = _.reject(data, {settingsKey: 'Upload Directory'});
 
         _.forEach(data, function (setting) {
           setting.description = $sce.trustAsHtml(Autolinker.link(setting.description, { newWindow: "true" } ));
@@ -67,23 +69,13 @@ angular.module('streama')
 
       $scope.uploadStatus = {};
       $scope.upload = function (setting, files) {
-        //check if upload dir is set
-        apiService.settings.list().then(function (response) {
-          var data = response.data;
-          var uploadDir = _.find(data, {settingsKey: 'Upload Directory'});
-          if (uploadDir.value) {
-            //do upload
-            uploadService.doUpload($scope.uploadStatus, 'file/upload.json?isPublic=true', function (data) {
-              $scope.uploadStatus.percentage = null;
-              if(data.error) return;
+        uploadService.doUpload($scope.uploadStatus, 'file/upload.json?isPublic=true', function (data) {
+          $scope.uploadStatus.percentage = null;
+          if (data.error) return;
 
-              setting.value = "upload:" + data.id;
-              $scope.getAssetFromSetting(setting);
-            }, function () {}, files);
-          }else{
-            alertify.error("You have to set and save Upload Directory first");
-          }
-        });
+          setting.value = "upload:" + data.id;
+          $scope.getAssetFromSetting(setting);
+        }, function () {}, files);
       };
 
       $scope.getAssetFromSetting = function (setting) {

@@ -8,6 +8,7 @@ class SettingsService {
   def theMovieDbService
   def opensubtitlesService
   def grailsApplication
+  def muxService
 
   def getBaseUrl() {
     return Settings.findBySettingsKey('Base URL')?.value
@@ -71,6 +72,9 @@ class SettingsService {
     if (settingsInstance.settingsKey == 'Credentials for opensubtitles') {
       validateCredentialsForOpensubtitles(settingsInstance, resultValue)
     }
+    if (settingsInstance.settingsKey == 'Mux Token ID' || settingsInstance.settingsKey == 'Mux Token Secret') {
+      validateMuxCredentials(settingsInstance, resultValue)
+    }
 
     return resultValue;
   }
@@ -108,6 +112,23 @@ class SettingsService {
       resultValue.error = true;
       resultValue.message = "The directory could not be accessed by the application. Please make sure that the directory exists and that you set the correct permissions.";
     }
+  }
+
+  /**
+   * Checks the entered Mux credentials against the Mux API. The value that is not being
+   * edited (or not saved yet) is taken from the database / environment.
+   */
+  def validateMuxCredentials(Settings settingsInstance, resultValue) {
+    def tokenId = settingsInstance.settingsKey == 'Mux Token ID' ? settingsInstance.value : muxService.tokenId
+    def tokenSecret = settingsInstance.settingsKey == 'Mux Token Secret' ? settingsInstance.value : muxService.tokenSecret
+
+    def result = muxService.checkCredentials(tokenId, tokenSecret)
+    if (result.valid) {
+      resultValue.success = true
+    } else {
+      resultValue.error = true
+    }
+    resultValue.message = result.message
   }
 
   def validateTheMovieDbAPI(Settings settingsInstance, resultValue) {

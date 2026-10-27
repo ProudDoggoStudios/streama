@@ -8,7 +8,7 @@ angular.module('streama.translations').config(function ($translateProvider) {
       TITLE: 'Please Login',
       USERNAME: 'Username',
       PASSWORD: 'Password',
-      FIRST_TIME_HINT: 'First time logging in? Try \'admin\' for both fields.',
+      FIRST_TIME_HINT: 'First time logging in? Try the username \'Admin\'.',
       SUBMIT: 'Login',
       SESSION_EXPIRED: 'Your session expired since your last activity. Please login again.',
       FORGOT_PASSWORD: 'Forgot Password?'

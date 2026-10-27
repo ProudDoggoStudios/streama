@@ -1,0 +1,10 @@
+# Base44 sandbox image for Streama (Grails 3.2 / Gradle 3.1 — requires JDK 8).
+# Only tooling lives here: the application source is bind-mounted at runtime
+# (see docker-compose.base44.yml) so edits are picked up without rebuilding.
+FROM eclipse-temurin:8-jdk
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates procps \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app

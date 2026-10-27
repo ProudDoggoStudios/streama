@@ -312,6 +312,15 @@ angular.module('streama').factory('apiService', function ($http, $rootScope, con
 			}
 		},
 
+    mux: {
+      configured: function () {
+        return $http.get('mux/configured.json');
+      },
+      fileStatus: function (id) {
+        return $http.get('mux/fileStatus.json', {params: {id: id}});
+      }
+    },
+
     settings: {
 			list: function () {
 				return $http.get('settings.json');

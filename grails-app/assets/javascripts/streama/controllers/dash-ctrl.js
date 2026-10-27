@@ -97,15 +97,15 @@ angular.module('streama').controller('dashCtrl',
     function showInitialSettingsWarning() {
       var settingsPromise = apiService.settings.list();
       settingsPromise.then(function (response) {
-        var data = response.data;
-        $scope.settings = data;
-        var TheMovieDbAPI = _.find(data, {settingsKey: 'Upload Directory'});
+        $scope.settings = response.data;
 
-        if (!TheMovieDbAPI.value) {
-          alertify.alert('You need to fill out some required base-settings. You will be redirected to the settings page now.', function () {
-            $state.go('settings.settings');
-          });
-        }
+        apiService.mux.configured().then(function (muxResponse) {
+          if (!muxResponse.data.configured) {
+            alertify.alert('You need to set up Mux before you can add videos: enter your Token ID and Token Secret on the settings page. You will be redirected there now.', function () {
+              $state.go('settings.settings');
+            });
+          }
+        });
       });
       return settingsPromise;
     }

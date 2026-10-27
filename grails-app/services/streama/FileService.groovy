@@ -11,6 +11,8 @@ import static org.springframework.http.HttpStatus.*
 @Transactional
 class FileService {
 
+  def muxService
+
   def allowedVideoFormats = ['.mp4', '.mkv', '.webm', '.ogg', '.m4v']
   def allowedSubtitleFormats = ['.srt', '.vtt']
 
@@ -114,6 +116,11 @@ class FileService {
         tvShowByBackdrop.backdrop_image = null
         tvShowByBackdrop.save(flush: true, failOnError: true)
       }
+    }
+
+    if(file.muxAssetId){
+      // the video lives on Mux, so the asset has to be removed there too
+      muxService.deleteAsset(file.muxAssetId)
     }
 
     if(file.imagePath && file.fileExists){

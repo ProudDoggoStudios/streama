@@ -1,0 +1,19 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/login/auth",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d --build",
+  "secrets": [
+    {
+      "name": "MUX_TOKEN_ID",
+      "description": "Mux API access token ID (https://dashboard.mux.com/settings/access-tokens) used to upload and stream videos. Optional if entered on the app's Settings page.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    },
+    {
+      "name": "MUX_TOKEN_SECRET",
+      "description": "Mux API access token secret for the same token. Optional if entered on the app's Settings page.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    }
+  ]
+}

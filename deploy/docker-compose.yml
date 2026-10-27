@@ -1,0 +1,36 @@
+# Public deployment stack: Caddy (automatic HTTPS) in front of Streama.
+#
+#   cp .env.example .env   # set STREAMA_DOMAIN to your hostname
+#   docker compose up -d
+#
+# Ports 80 and 443 must be reachable from the internet (see deploy/README.md).
+services:
+  app:
+    build: ./image
+    restart: unless-stopped
+    environment:
+      # Videos live on Mux; these are optional (they can also be entered on the Settings page).
+      - MUX_TOKEN_ID=${MUX_TOKEN_ID:-}
+      - MUX_TOKEN_SECRET=${MUX_TOKEN_SECRET:-}
+    volumes:
+      - streama_data:/data
+
+  web:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - STREAMA_DOMAIN=${STREAMA_DOMAIN:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  streama_data:
+  caddy_data:
+  caddy_config:
